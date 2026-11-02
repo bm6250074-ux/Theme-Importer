@@ -9,12 +9,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Unzip project if uploaded as zip
+        run: |
+          for z in $(find . -maxdepth 2 -iname "*.zip" -not -path "./.git/*"); do
+            echo "Unzipping $z"
+            unzip -o -q "$z" -d "_unzipped"
+          done
+
       - name: Locate project folder
         id: loc
         run: |
           f=$(find . -name settings.gradle.kts -not -path "./.git/*" | head -n 1)
           if [ -z "$f" ]; then
-            echo "::error::settings.gradle.kts not found. Upload the project files (not the zip) to the repository."
+            echo "::error::settings.gradle.kts not found. Upload MtzImporter.zip to the repository root."
             ls -R | head -50
             exit 1
           fi
