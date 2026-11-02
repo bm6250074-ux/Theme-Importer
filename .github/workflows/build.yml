@@ -9,6 +9,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Locate project folder
+        id: loc
+        run: |
+          f=$(find . -name settings.gradle.kts -not -path "./.git/*" | head -n 1)
+          if [ -z "$f" ]; then
+            echo "::error::settings.gradle.kts not found. Upload the project files (not the zip) to the repository."
+            ls -R | head -50
+            exit 1
+          fi
+          echo "dir=$(dirname "$f")" >> "$GITHUB_OUTPUT"
+          echo "Project folder: $(dirname "$f")"
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -22,9 +34,10 @@ jobs:
           gradle-version: 8.7
 
       - name: Build debug APK
+        working-directory: ${{ steps.loc.outputs.dir }}
         run: gradle assembleDebug --no-daemon --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:
           name: MtzImporter-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: ${{ steps.loc.outputs.dir }}/app/build/outputs/apk/debug/*.apk
